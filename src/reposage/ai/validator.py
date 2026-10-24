@@ -37,23 +37,34 @@ def parse_and_clean_json(raw_text: str) -> Dict[str, Any]:
 
     cleaned = cleaned.strip()
 
+    # Clean potential model artifacts like '"nature": "observation" or "inference"'
+    cleaned_pre = re.sub(r'("[^"]+")\s+or\s+"[^"]+"(?:\s+or\s+"[^"]+")*', r'\1', cleaned)
+
     try:
-        data = json.loads(cleaned)
+        data = json.loads(cleaned_pre)
         if isinstance(data, dict):
             return data
     except json.JSONDecodeError:
         pass
 
     # Regex search for first { and last }
-    s = cleaned.find("{")
-    e = cleaned.rfind("}")
+    s = cleaned_pre.find("{")
+    e = cleaned_pre.rfind("}")
     if s != -1 and e != -1 and e > s:
+        candidate = cleaned_pre[s : e + 1]
         try:
-            data = json.loads(cleaned[s : e + 1])
+            data = json.loads(candidate)
             if isinstance(data, dict):
                 return data
         except Exception:
-            pass
+            # Try removing trailing commas
+            candidate_no_commas = re.sub(r',\s*([}\]])', r'\1', candidate)
+            try:
+                data = json.loads(candidate_no_commas)
+                if isinstance(data, dict):
+                    return data
+            except Exception:
+                pass
 
     raise SchemaValidationError("Failed to parse valid JSON from model output.")
 

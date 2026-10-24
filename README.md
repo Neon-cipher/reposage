@@ -57,6 +57,15 @@ d:\reposage\
   ollama run llama3.2:1b
   ```
 
+#### Supported Local Models Provenance & Licensing:
+- **Qwen 2.5 (`qwen2.5:latest` / 7B)**: Developed by the Qwen Team (Alibaba Cloud), licensed under the Apache 2.0 License. Recommended for comprehensive architecture deductions and detailed roadmaps.
+- **Llama 3.2 (`llama3.2:1b` / 1.2B)**: Developed by Meta, licensed under the Meta Llama 3.2 Community License. Recommended for low-latency, resource-constrained laptop environments.
+
+#### Environment Variables (Optional):
+- `OLLAMA_URL`: URL of the local Ollama daemon (defaults to `http://localhost:11434`).
+- `OLLAMA_MODEL`: Model tag to invoke (defaults to `qwen2.5:latest`).
+
+
 ### 2. Installation
 ```bash
 git clone https://github.com/your-org/reposage.git

@@ -1,0 +1,7 @@
+[project]
+name = "sample-tiny"
+version = "0.1.0"
+description = "A harmless sample project for RepoSage quality gate verification"
+dependencies = [
+    "requests>=2.28.0",
+]

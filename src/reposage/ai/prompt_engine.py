@@ -134,7 +134,7 @@ Produce a JSON response conforming strictly to this JSON schema:
     "key_technologies": ["Language or library 1", "Language or library 2"],
     "findings": [
       {{
-        "nature": "observation" or "inference" or "unknown",
+        "nature": "observation",
         "statement": "Claim statement",
         "evidence_ids": ["ev_1"]
       }}
@@ -155,7 +155,7 @@ Produce a JSON response conforming strictly to this JSON schema:
     ],
     "findings": [
       {{
-        "nature": "observation" or "inference" or "unknown",
+        "nature": "observation",
         "statement": "Claim statement",
         "evidence_ids": ["ev_2"]
       }}
@@ -177,7 +177,7 @@ Produce a JSON response conforming strictly to this JSON schema:
     ],
     "findings": [
       {{
-        "nature": "observation" or "inference" or "unknown",
+        "nature": "observation",
         "statement": "Claim statement",
         "evidence_ids": ["ev_3"]
       }}

@@ -111,6 +111,9 @@ def test_export_report_to_json(sample_analysis):
     data = json.loads(exported_json)
     assert data["metadata"]["root_path"] == "/mock/repo"
     assert data["metadata"]["model_name"] == "qwen2.5:latest"
+    assert "analysis_timestamp_utc" in data["metadata"]
+    assert "PROVISIONAL NOTICE" in data["metadata"]["disclaimer"]
+    assert len(data["metadata"]["limitations"]) > 0
     assert data["project_overview"]["purpose"] == "A lightweight testing repo"
     assert len(data["contribution_roadmap"]["tasks"]) == 1
     assert data["contribution_roadmap"]["tasks"][0]["title"] == "Add unit tests for main()"
@@ -121,6 +124,9 @@ def test_export_report_to_markdown(sample_analysis):
     exported_md = export_report_to_markdown(inspection, report)
 
     assert "# RepoSage Analysis Report: `/mock/repo`" in exported_md
+    assert "PROVISIONAL NOTICE" in exported_md
+    assert "Analysis Timestamp" in exported_md
+    assert "Known Analysis Limitations" in exported_md
     assert "**Purpose**: A lightweight testing repo" in exported_md
     assert "### Task 1: Add unit tests for main() (Evidenced)" in exported_md
     assert "main.py" in exported_md

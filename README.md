@@ -1,27 +1,26 @@
 # 🌿 RepoSage
 
-> **Small Open-Source AI Repository Analyst for Hacktoberfest**
+> **Production-Minded Next.js & Local Open-Weight AI Repository Analyst**
 > 
-> *Helping developers orient themselves in unfamiliar repositories and find beginner-friendly contribution opportunities without executing untrusted code.*
+> *Helping developers orient themselves in unfamiliar public repositories and find beginner-friendly contribution opportunities without executing untrusted code or sending data to the cloud.*
 
 ---
 
 ## 🚀 Key Features
 
-- 🌐 **Public Repository URL Analysis**: Securely analyzes public GitHub repositories via shallow clone into an isolated sandbox, automatically cleaning up temporary files after analysis.
-- 🛡️ **SSRF & Rebinding Protection**: Strict HTTPS allowlist, rejection of private/internal IPs, localhost, custom ports, and embedded credentials.
-- 🔍 **Strict Deterministic Inspection**: Traverses repositories safely without executing repository code or installing untrusted dependencies.
+- 🌐 **Public GitHub Repository Analysis**: Securely analyzes public GitHub repositories via shallow clone into an isolated sandbox, automatically destroying temporary files after analysis.
+- 🛡️ **SSRF & DNS Rebinding Defenses**: Strict HTTPS allowlist (`github.com`), rejection of private/internal IPs, localhost, custom ports, and embedded credentials.
+- 🔍 **Deterministic File Inspection**: Traverses repositories safely without executing repository code, build scripts, or installing dependencies.
 - 🛡️ **Zero-Trust Exclusions**: Automatically excludes `.git`, `.venv`, `node_modules`, binary artifacts, and credential files (`.env`, `.pem`, `.key`).
 - 🤖 **Local Ollama Integration**: Powered entirely by local models (`qwen2.5`, `llama3.2`) via Ollama's HTTP API. Zero data leaves your machine.
 - ⚖️ **Tripartite Finding Classification**:
-  - **Facts**: Proven directly from AST, configs, file trees, and tests.
-  - **Inferences**: Deductions by the AI about architecture and logic flow.
+  - **Observations**: Directly proven from code AST, manifests, file trees, and tests.
+  - **Inferences**: Deductions by the AI about architecture and runtime logic flow.
   - **Unknowns**: Transparently marked gaps requiring developer verification.
-- 🎯 **Hacktoberfest Opportunity Engine**:
-  - Discovers high-impact `Good First Issues`.
-  - Flags unaddressed `TODO` / `FIXME` comments with exact line citations.
-  - Identifies documentation gaps and missing test coverage.
-- 🖥️ **Streamlit UI**: Clean, interactive dashboard supporting both Local Folders and Public Git URLs.
+- 🎯 **Beginner Contribution Opportunities**:
+  - Highlights beginner tasks with exact file links, prerequisites, and test validation commands.
+  - Distinguishes evidenced tasks from speculative recommendations.
+- 🖥️ **Professional Minimal UI**: Next.js App Router, Tailwind CSS dark theme, near-black aesthetics, and instant JSON/Markdown report exports.
 
 ---
 
@@ -29,20 +28,35 @@
 
 ```
 d:\reposage\
-├── src\reposage\
-│   ├── scanner.py          # Deterministic safe file traversal & metrics
-│   ├── analyzers\
-│   │   ├── python_ast.py   # Python AST entrypoint & symbol parsing
-│   │   └── generic.py      # Regex & heuristic JS/TS, config, and TODO extractor
-│   ├── models.py           # Core dataclasses and citation models
-│   ├── ollama_client.py    # Robust HTTP client for local Ollama API
-│   ├── prompts.py          # Grounded prompts with anti-injection fences
-│   └── reporter.py         # Synthesis of facts, inferences, and opportunities
-├── tests\                  # Comprehensive unit tests
-├── app.py                  # Streamlit dashboard
-├── requirements.txt        # Dependencies
-├── pyproject.toml          # Build configuration
-└── LICENSE                 # MIT License
+├── src\
+│   ├── app\
+│   │   ├── api\
+│   │   │   ├── analyze\route.ts    # POST /api/analyze (orchestration & inference)
+│   │   │   └── health\route.ts     # GET /api/health (Ollama & system status)
+│   │   ├── globals.css             # Tailwind base styles
+│   │   ├── layout.tsx              # Root HTML layout
+│   │   └── page.tsx                # Professional developer landing & dashboard
+│   └── lib\
+│       ├── ai\
+│       │   ├── ollama-client.ts    # Local Ollama HTTP API client
+│       │   ├── prompts.ts          # Grounded prompt builder with anti-injection fences
+│       │   └── response-validator.ts # Zod schema for structured output
+│       ├── report\
+│       │   ├── export.ts           # JSON & GitHub-flavored Markdown exporter
+│       │   └── report-generator.ts # Citation resolver & hallucination checker
+│       └── repository\
+│           ├── evidence-index.ts   # Stable evidence ID indexing
+│           ├── file-scanner.ts     # Static text traversal, size limits, secret detector
+│           ├── repository-loader.ts # Shallow clone sandbox with automated cleanup
+│           └── url-validator.ts    # Strict URL validation & SSRF defense
+├── tests\
+│   ├── report-generator.test.ts    # Vitest report validation & export tests
+│   ├── scanner.test.ts             # Vitest scanner and evidence tests
+│   └── url-validator.test.ts       # Vitest URL and SSRF tests
+├── package.json
+├── tailwind.config.ts
+├── tsconfig.json
+└── vitest.config.ts
 ```
 
 ---
@@ -50,7 +64,8 @@ d:\reposage\
 ## 📦 Getting Started
 
 ### 1. Prerequisites
-- Python 3.10+
+- Node.js 18+ (verified on v24.18.0)
+- Git CLI
 - [Ollama](https://ollama.ai) installed and running locally:
   ```bash
   ollama serve
@@ -67,35 +82,51 @@ d:\reposage\
 - `OLLAMA_URL`: URL of the local Ollama daemon (defaults to `http://localhost:11434`).
 - `OLLAMA_MODEL`: Model tag to invoke (defaults to `qwen2.5:latest`).
 
-
 ### 2. Installation
 ```bash
-git clone https://github.com/your-org/reposage.git
+git clone https://github.com/Neon-cipher/reposage.git
 cd reposage
-pip install -e .
+npm install
 ```
 
-### 3. Launching the Dashboard
+### 3. Launching the Development Server
 ```bash
-streamlit run app.py
+npm run dev
+# or for production:
+npm run build
+npm start
+```
+Open **[http://localhost:3000](http://localhost:3000)** in your browser.
+
+### 4. Running Unit Tests
+```bash
+npm test
 ```
 
-### 5. Quick Demo with Sample Repository
-RepoSage comes with a harmless sample repository inside `sample_repo/` for instant evaluation:
-1. Start the app: `streamlit run app.py`
-2. Enter the path `sample_repo/` (or absolute path) in the sidebar.
-3. Click **"1. Static Scan"** to preview the deterministic inventory and evidence index.
-4. Click **"2. Run AI"** to generate the evidence-grounded overview, architecture breakdown, and contribution roadmap.
-5. Explore the **"Cited Evidence"** tab to verify that every finding cites exact file lines.
-6. Export the report via the **"Export Report"** tab as Markdown or JSON.
+---
+
+## ⚡ Live Demo Walkthrough
+
+1. Open **[http://localhost:3000](http://localhost:3000)**.
+2. Check the **Local Ollama** status pill in the top header (indicates model presence and verification).
+3. Paste a public GitHub repository URL into the input field:
+   `https://github.com/psf/requests` or `https://github.com/octocat/Hello-World`
+4. Click **"Analyze Repository"**.
+5. Observe the multi-stage progress (validating URL → shallow clone → static scan → local AI inference).
+6. Explore the generated tabs:
+   - **Overview**: Purpose, audience, components, technologies, and grounded findings.
+   - **Architecture**: System architecture with verified imports vs. inferred runtime relationships.
+   - **Contribution Roadmap**: High-value beginner tasks with exact target files and validation steps.
+   - **Cited Evidence**: All verbatim code excerpts cited in the findings.
+   - **Export Report**: Downloadable Markdown and JSON formats with UTC timestamp and provisional notice.
 
 ---
 
 ## ⚠️ Known Limitations
 
 1. **Static Inspection Only**: RepoSage statically parses source text and AST. It does not run test suites or execute repository build scripts by design.
-2. **Context Window Capping**: Salient repository evidence is ranked and capped at the top 50 items to fit standard 4k-8k local LLM context limits reliably.
-3. **JS/TS Parsing**: JavaScript and TypeScript symbol and import analysis is heuristic and pattern-based rather than utilizing a full TypeScript compiler service.
+2. **Context Window Capping**: Salient repository evidence is ranked and capped at the top 40-50 items to fit standard 4k-8k local LLM context limits reliably.
+3. **Provider Scope**: Prioritizes public GitHub repositories. Direct IP hosts and private repositories are intentionally disallowed.
 
 ---
 
@@ -106,11 +137,10 @@ RepoSage comes with a harmless sample repository inside `sample_repo/` for insta
 - **Underlying Models**:
   - `qwen2.5:latest` (Alibaba Cloud, Apache 2.0 License).
   - `llama3.2:1b` (Meta, Llama 3.2 Community License).
-- **Web Interface**: Built with **[Streamlit](https://streamlit.io)** (Apache 2.0).
+- **Web Stack**: Built with **Next.js 15**, **React 19**, **Tailwind CSS**, and **Vitest**.
 
 ---
 
 ## 📄 License
 
 Distributed under the [MIT License](LICENSE).
-

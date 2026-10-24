@@ -78,21 +78,37 @@ pip install -e .
 streamlit run app.py
 ```
 
-### 4. Running Tests
-```bash
-pytest
-```
+### 5. Quick Demo with Sample Repository
+RepoSage comes with a harmless sample repository inside `sample_repo/` for instant evaluation:
+1. Start the app: `streamlit run app.py`
+2. Enter the path `sample_repo/` (or absolute path) in the sidebar.
+3. Click **"1. Static Scan"** to preview the deterministic inventory and evidence index.
+4. Click **"2. Run AI"** to generate the evidence-grounded overview, architecture breakdown, and contribution roadmap.
+5. Explore the **"Cited Evidence"** tab to verify that every finding cites exact file lines.
+6. Export the report via the **"Export Report"** tab as Markdown or JSON.
 
 ---
 
-## 🛡️ Safety & Responsible AI
+## ⚠️ Known Limitations
 
-- **No Remote Calls**: All analysis is computed locally via the local Ollama daemon at `http://localhost:11434`.
-- **Anti-Prompt Injection**: Repository snippets are treated as untrusted text, wrapped in delimited blocks, and forbidden from overriding instructions.
-- **Evidence-Based Citations**: Findings and opportunities link to verifiable file paths and line ranges.
+1. **Static Inspection Only**: RepoSage statically parses source text and AST. It does not run test suites or execute repository build scripts by design.
+2. **Context Window Capping**: Salient repository evidence is ranked and capped at the top 50 items to fit standard 4k-8k local LLM context limits reliably.
+3. **JS/TS Parsing**: JavaScript and TypeScript symbol and import analysis is heuristic and pattern-based rather than utilizing a full TypeScript compiler service.
+
+---
+
+## 🙏 Acknowledgements & Attribution
+
+- **AI Pair Programming**: Developed in pair programming collaboration with **Google DeepMind's Antigravity agentic assistant (powered by Gemini 3.8 Flash)**.
+- **Local Inference Engine**: Powered by **[Ollama](https://ollama.ai)**.
+- **Underlying Models**:
+  - `qwen2.5:latest` (Alibaba Cloud, Apache 2.0 License).
+  - `llama3.2:1b` (Meta, Llama 3.2 Community License).
+- **Web Interface**: Built with **[Streamlit](https://streamlit.io)** (Apache 2.0).
 
 ---
 
 ## 📄 License
 
-Distributed under the [MIT License](file:///d:/reposage/LICENSE).
+Distributed under the [MIT License](LICENSE).
+

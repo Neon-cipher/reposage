@@ -8,6 +8,8 @@
 
 ## 🚀 Key Features
 
+- 🌐 **Public Repository URL Analysis**: Securely analyzes public GitHub repositories via shallow clone into an isolated sandbox, automatically cleaning up temporary files after analysis.
+- 🛡️ **SSRF & Rebinding Protection**: Strict HTTPS allowlist, rejection of private/internal IPs, localhost, custom ports, and embedded credentials.
 - 🔍 **Strict Deterministic Inspection**: Traverses repositories safely without executing repository code or installing untrusted dependencies.
 - 🛡️ **Zero-Trust Exclusions**: Automatically excludes `.git`, `.venv`, `node_modules`, binary artifacts, and credential files (`.env`, `.pem`, `.key`).
 - 🤖 **Local Ollama Integration**: Powered entirely by local models (`qwen2.5`, `llama3.2`) via Ollama's HTTP API. Zero data leaves your machine.
@@ -19,7 +21,7 @@
   - Discovers high-impact `Good First Issues`.
   - Flags unaddressed `TODO` / `FIXME` comments with exact line citations.
   - Identifies documentation gaps and missing test coverage.
-- 🖥️ **Streamlit UI**: Clean, interactive dashboard for repository exploration.
+- 🖥️ **Streamlit UI**: Clean, interactive dashboard supporting both Local Folders and Public Git URLs.
 
 ---
 

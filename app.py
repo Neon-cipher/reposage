@@ -127,8 +127,19 @@ with st.sidebar:
 
     st.markdown("---")
     st.subheader("2. Target Repository")
-    current_cwd = str(Path(os.getcwd()).resolve())
-    repo_input = st.text_input("Local Folder Path", value=current_cwd)
+    source_type = st.radio("Source Mode", ["Local Repository", "Public Repository URL"], horizontal=True)
+
+    if source_type == "Local Repository":
+        current_cwd = str(Path(os.getcwd()).resolve())
+        repo_input = st.text_input("Local Folder Path", value=current_cwd)
+        url_input = ""
+    else:
+        url_input = st.text_input(
+            "Public Git URL",
+            value="https://github.com/psf/requests",
+            help="Supported: Public GitHub repository URLs (HTTPS)",
+        )
+        repo_input = ""
 
     st.markdown("---")
     st.subheader("3. Inspection Limits")
@@ -142,63 +153,80 @@ with st.sidebar:
     with c_btn2:
         run_ai_btn = st.button("2. Run AI", type="primary", use_container_width=True)
 
-# Path validation helper
-def get_validated_root(path_str: str):
-    try:
-        return validate_repository_root(path_str)
-    except Exception as e:
-        st.error(f"Invalid path: {e}")
-        return None
+# Helper function to execute deterministic inspection for local or remote repo
+def execute_deterministic_scan(limits: InspectionLimits):
+    if source_type == "Local Repository":
+        try:
+            val_path = validate_repository_root(repo_input)
+            with st.spinner("Executing deterministic inspection without code execution..."):
+                res = inspect_repository(str(val_path), limits=limits)
+                st.session_state.inspection_result = res
+                st.session_state.analyzed_repo_path = str(val_path)
+                st.session_state.retrieval_metadata = {"source": "local", "path": str(val_path)}
+                st.session_state.ai_report = None
+                st.session_state.last_error = None
+                st.success(f"Deterministic scan finished: {res.summary.total_files_scanned} files inventory ready.")
+        except Exception as e:
+            st.session_state.last_error = str(e)
+            st.error(f"Inspection error: {e}")
+    else:
+        # Public URL mode
+        try:
+            from reposage.remote.retriever import retrieve_public_repository
+            with st.spinner("Safely validating and shallow-cloning public repository..."):
+                with retrieve_public_repository(url_input) as retrieved:
+                    st.info(f"Retrieved `{retrieved.canonical_identity}` via {retrieved.retrieval_method} ({retrieved.total_files_downloaded} files, {retrieved.total_size_bytes / 1024:.1f} KB).")
+                    with st.spinner("Executing deterministic inspection on retrieved files..."):
+                        res = inspect_repository(retrieved.temp_dir, limits=limits)
+                        # Set root_path in summary to canonical repo identity so UI displays clean repo name
+                        res.summary.root_path = f"https://github.com/{retrieved.canonical_identity}"
+                        st.session_state.inspection_result = res
+                        st.session_state.analyzed_repo_path = url_input
+                        st.session_state.retrieval_metadata = {
+                            "source": "remote_url",
+                            "identity": retrieved.canonical_identity,
+                            "url": retrieved.normalized_url,
+                            "method": retrieved.retrieval_method,
+                            "downloaded_files": retrieved.total_files_downloaded,
+                            "downloaded_bytes": retrieved.total_size_bytes,
+                        }
+                        st.session_state.ai_report = None
+                        st.session_state.last_error = None
+                        st.success(f"Remote scan complete! {res.summary.total_files_scanned} files analyzed. Temporary clone cleaned up.")
+        except Exception as e:
+            st.session_state.last_error = str(e)
+            st.error(f"Remote Retrieval Error: {e}")
+
 
 # Trigger 1: Deterministic Static Scan
 if run_inspection_btn:
-    validated_path = get_validated_root(repo_input)
-    if validated_path:
-        limits = InspectionLimits(
-            max_files=int(max_files),
-            max_file_size_bytes=int(max_file_size_kb * 1024),
-        )
-        with st.spinner("Executing deterministic inspection without code execution..."):
-            try:
-                res = inspect_repository(str(validated_path), limits=limits)
-                st.session_state.inspection_result = res
-                st.session_state.analyzed_repo_path = str(validated_path)
-                st.session_state.ai_report = None  # Reset AI report if repo re-inspected
-                st.session_state.last_error = None
-                st.success(f"Deterministic scan finished: {res.summary.total_files_scanned} files inventory ready.")
-            except Exception as e:
-                st.session_state.last_error = str(e)
-                st.error(f"Inspection error: {e}")
+    scan_limits = InspectionLimits(
+        max_files=int(max_files),
+        max_file_size_bytes=int(max_file_size_kb * 1024),
+    )
+    execute_deterministic_scan(scan_limits)
 
 # Trigger 2: Local AI Analysis
 if run_ai_btn:
-    validated_path = get_validated_root(repo_input)
-    if validated_path:
-        # If no inspection yet or path changed, run inspection first
-        if not st.session_state.inspection_result or st.session_state.analyzed_repo_path != str(validated_path):
-            limits = InspectionLimits(
-                max_files=int(max_files),
-                max_file_size_bytes=int(max_file_size_kb * 1024),
-            )
-            with st.spinner("Running preliminary static inspection..."):
-                try:
-                    st.session_state.inspection_result = inspect_repository(str(validated_path), limits=limits)
-                    st.session_state.analyzed_repo_path = str(validated_path)
-                except Exception as e:
-                    st.error(f"Inspection error: {e}")
+    scan_limits = InspectionLimits(
+        max_files=int(max_files),
+        max_file_size_bytes=int(max_file_size_kb * 1024),
+    )
+    current_target = repo_input if source_type == "Local Repository" else url_input
+    if not st.session_state.inspection_result or st.session_state.analyzed_repo_path != current_target:
+        execute_deterministic_scan(scan_limits)
 
-        # Now run AI analysis
-        if st.session_state.inspection_result:
-            engine = AIAnalysisEngine(ollama_client=client)
-            with st.spinner(f"Querying local model '{ollama_model}' with grounded evidence..."):
-                try:
-                    report = engine.analyze(st.session_state.inspection_result)
-                    st.session_state.ai_report = report
-                    st.session_state.last_error = None
-                    st.success(f"AI analysis completed: {report.total_evidence_cited} citations validated.")
-                except Exception as e:
-                    st.session_state.last_error = str(e)
-                    st.error(f"AI Analysis Failed: {e}")
+    if st.session_state.inspection_result:
+        engine = AIAnalysisEngine(ollama_client=client)
+        with st.spinner(f"Querying local model '{ollama_model}' with grounded evidence..."):
+            try:
+                report = engine.analyze(st.session_state.inspection_result)
+                st.session_state.ai_report = report
+                st.session_state.last_error = None
+                st.success(f"AI analysis completed: {report.total_evidence_cited} citations validated.")
+            except Exception as e:
+                st.session_state.last_error = str(e)
+                st.error(f"AI Analysis Failed: {e}")
 
 # Display Dashboard
 st.header("RepoSage Repository Intelligence Dashboard")
@@ -207,8 +235,23 @@ inspection = st.session_state.inspection_result
 ai_report = st.session_state.ai_report
 
 if not inspection:
-    st.info("👈 Enter a local repository folder path and click **1. Static Scan** or **2. Run AI** to inspect the repository.")
+    st.info("👈 Select **Local Repository** or **Public Repository URL** in the sidebar and click **1. Static Scan** or **2. Run AI**.")
 else:
+    # Display Remote Identity banner if applicable
+    retrieval_meta = getattr(st.session_state, "retrieval_metadata", {})
+    if retrieval_meta.get("source") == "remote_url":
+        st.markdown(
+            f"""
+            <div style="background: #1e293b; border: 1px solid #38bdf8; border-radius: 6px; padding: 10px 16px; margin-bottom: 14px;">
+                🌐 <strong>Public Repository:</strong> <code>{retrieval_meta.get('identity')}</code> 
+                | <strong>Method:</strong> <code>{retrieval_meta.get('method')}</code> 
+                | <strong>Source:</strong> <code>{retrieval_meta.get('url')}</code>
+                <br><small style="color: #94a3b8;">🔒 Isolated shallow-clone. All files inspected statically in temporary sandbox and cleaned up.</small>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
     # Top KPI Metrics Row
     m1, m2, m3, m4, m5 = st.columns(5)
     with m1:
